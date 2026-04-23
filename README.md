@@ -21,7 +21,7 @@ ros2_robotic_arm/
         │   ├── armnode.cpp         # Główny węzeł ROS2 (ArmNode)
         │   ├── ArmController.hpp   # Kontroler ramienia
         │   ├── ArmController.cpp
-        │   ├── CanBridge.hpp       # Warstwa komunikacji SocketCAN
+        │   ├── CanBridge.hpp       # Warstwa komunikacji Waveshare USB-CAN-A
         │   └── CanBridge.cpp
         ├── launch/main.launch.py   # Launch file
         ├── urdf/arm6dof.urdf       # Opis robota
@@ -40,7 +40,7 @@ ArmNode (ROS2) → ArmController → CanBridge → USB-CAN-A → silniki AK seri
 |------|------|--------|
 | 1 | Workspace ROS2, węzeł C++, launch file Python | ✅ |
 | 2 | URDF 6-DOF, TF2, wizualizacja RViz2 | ✅ |
-| 3 | CanBridge (SocketCAN), ArmController, integracja USB-CAN-A | ✅ |
+| 3 | CanBridge (Waveshare binarny protokół), ArmController, odczyt danych z silnika AK45-36 | ✅ |
 | 4 | Symulacja Gazebo Fortress | ⏳ |
 | 4 | ros2_control, Hardware Interface, kontrolery | ⏳ |
 | 5 | Kinematyka FK/IK, parametry DH, KDL | ⏳ |
@@ -51,6 +51,9 @@ ArmNode (ROS2) → ArmController → CanBridge → USB-CAN-A → silniki AK seri
 ## Uruchomienie
 
 ```bash
+# Zainstaluj narzędzia CAN
+sudo apt install can-utils
+
 # Zbuduj workspace
 cd ~/ros2_robotic_arm
 colcon build
@@ -58,7 +61,7 @@ colcon build
 # Załaduj środowisko
 source install/setup.bash
 
-# Uruchom wizualizację RViz2
+# Uruchom węzeł
 ros2 launch arm6dof main.launch.py
 ```
 
@@ -68,7 +71,14 @@ ros2 launch arm6dof main.launch.py
 sudo apt install ros-humble-joint-state-publisher
 sudo apt install ros-humble-robot-state-publisher
 sudo apt install ros-humble-ros-gz
+sudo apt install can-utils
 ```
+
+## Sprzęt
+
+- Waveshare USB-CAN-A (CH340, protokół binarny 2 Mbps)
+- Silniki AK series (AK45-36) — protokół MIT Cheetah
+- Port: `/dev/ttyUSB*`
 
 ## Robot
 
