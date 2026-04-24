@@ -9,6 +9,7 @@ struct ServoState {
     float position;
     float velocity;
     float torque;
+    int8_t temp;
 
 };
 

@@ -11,7 +11,11 @@ class ArmNode : public rclcpp::Node {
             while(rclcpp::ok()) {
                 ServoState state;
                 if(arm_controller.ServoReceiveData(state)) {
-                    RCLCPP_INFO(this->get_logger(), "ID: %d", state.id);
+                    RCLCPP_INFO(this->get_logger(), "id:%d pos:%.1f vel:%.1f cur:%.2f temp:%d",
+                        state.id, state.position, state.velocity, state.torque, state.temp);
+
+                    
+
                 }
             }
         }

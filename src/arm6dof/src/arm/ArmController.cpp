@@ -1,5 +1,6 @@
 #include "ArmController.hpp"
 #include <string>
+#include <iostream>
 
 ArmController::ArmController(const std::string& interface) {
     motor_ids[0] = 0x01;
@@ -17,11 +18,17 @@ bool ArmController::ServoReceiveData(ServoState& state) {
     uint32_t id;
     std::vector<uint8_t> data;
     bool result = can.receive(id, data);
-    if(result) {
-        state.id = id;
-        state.position = 0.0f;
-        state.torque = 0.0f;
-        state.velocity = 0.0f;
+    if((id & 0xFF00) == 0x2900) {
+        state.id = id & 0xFF;
+        state.position = (int16_t)((data[0] << 8) | data[1]);
+        state.torque = (int16_t)((data[4] << 8) | data[5]) / 10.0f;
+        state.velocity = (int16_t)((data[2] << 8) | data[3]);
+        state.temp = (uint8_t)(data[6]);
+
+
+        
+
+        
     }
     return result;
 }
