@@ -9,6 +9,7 @@ struct ServoState {
     float position;
     float velocity;
     float torque;
+
 };
 
 class ArmController {
@@ -18,6 +19,6 @@ private:
 public:
     ArmController(const std::string& interface);
     bool ServoReceiveData(ServoState& state);
-
-
+    bool setPosMotor(int motor_id, float degrees);
 };
+

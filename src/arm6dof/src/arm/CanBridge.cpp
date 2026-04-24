@@ -4,6 +4,9 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <cstring>
+#include <sys/ioctl.h>
+#include <linux/serial.h>
+#include <cerrno>
 
 CanBridge::CanBridge() {
     serial_fd = -1;
@@ -13,12 +16,14 @@ CanBridge::CanBridge() {
 bool CanBridge::open(const std::string& interface) {
         
     serial_fd = ::open(interface.c_str(), O_RDWR | O_NOCTTY);
-    if(serial_fd == -1) { std::cerr<< "Blad otwarcia seriala\n"; return false;}
+    if(serial_fd == -1) { std::cerr<< "Blad otwarcia seriala: " << strerror(errno) << "\n"; return false;}
+    std::string cmd = "stty -F " + interface + " 2000000 raw -echo";
+    system(cmd.c_str());
+
     struct termios tty;
-    memset(&tty, 0, sizeof(tty));
     tcgetattr(serial_fd, &tty);
-    cfsetospeed(&tty, B2000000);
-    cfsetispeed(&tty, B2000000);
+    tty.c_cc[VTIME] = 1;
+    tty.c_cc[VMIN]  = 0;
     tcsetattr(serial_fd, TCSANOW, &tty);
     return true;
 }
@@ -38,18 +43,36 @@ void CanBridge::send(uint32_t id, const std::vector<uint8_t>& data) {
 
 }
 
+bool CanBridge::readByte(uint8_t& b) {
+    return ::read(serial_fd, &b, 1) == 1;
+}
+
 bool CanBridge::receive(uint32_t& id, std::vector<uint8_t>& data) {
-    uint8_t header[2];
-    if (::read(serial_fd, header, 2) != 2) return false;
-    if (header[0] != 0xAA || (header[1] & 0xC0) != 0xC0) return false;
+    uint8_t b;
+    // szukaj 0xAA - przeskakuj smieci w buforze
+    do {
+        if (!readByte(b)) return false;
+    } while (b != 0xAA);
+    // czytaj drugi bajt
+    if (!readByte(b)) return false;
+    uint8_t data_len = b & 0x0F;
 
-    uint8_t data_len = header[1] & 0x0F;
-    std::vector<uint8_t> rest(4 + data_len + 1);
-    if (::read(serial_fd, rest.data(), rest.size()) != (int)rest.size()) return false;
-    if (rest[4 + data_len] != 0x55) return false;
+    // czytaj 4 bajty CAN ID
+    uint8_t id_bytes[4];
+    for (int i = 0; i < 4; i++) {
+        if (!readByte(id_bytes[i])) return false;
+    }
 
-    id = rest[0] | (rest[1] << 8) | (rest[2] << 16) | (rest[3] << 24);
-    data.assign(rest.begin() + 4, rest.begin() + 4 + data_len);
+    // czytaj dane
+    data.resize(data_len);
+    for (int i = 0; i < data_len; i++) {
+        if (!readByte(data[i])) return false;
+    }
+
+    // czytaj stop byte
+    if (!readByte(b) || b != 0x55) return false;
+
+    id = id_bytes[0] | (id_bytes[1] << 8) | (id_bytes[2] << 16) | (id_bytes[3] << 24);
     return true;
 }
 

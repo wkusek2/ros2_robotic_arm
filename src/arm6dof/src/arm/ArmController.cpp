@@ -25,3 +25,15 @@ bool ArmController::ServoReceiveData(ServoState& state) {
     }
     return result;
 }
+
+bool ArmController::setPosMotor(int motor_id, float degrees) {
+    int cmd_type = 4;
+    int32_t pos = (int32_t)(degrees * 1000000);
+    std::vector<uint8_t> packet;
+    packet.push_back(pos >> 24 & 0xFF);
+    packet.push_back(pos >> 16 & 0xFF);
+    packet.push_back(pos >> 8 & 0xFF);
+    packet.push_back(pos >> 0 & 0xFF);
+    can.send((cmd_type << 8) | motor_id, packet);
+    return true;
+}
