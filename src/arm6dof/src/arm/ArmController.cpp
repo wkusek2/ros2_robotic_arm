@@ -1,46 +1,61 @@
 #include "ArmController.hpp"
-#include <string>
+
 #include <iostream>
+#include <vector>
 
-ArmController::ArmController(const std::string& interface) {
-    motor_ids[0] = 0x01;
-    motor_ids[1] = 0x02;
-    motor_ids[2] = 0x03;
-    motor_ids[3] = 0x04;
-    motor_ids[4] = 0x05;
-    motor_ids[5] = 0x06;
+// Typy komend CAN (gorny bajt ID).
+static constexpr int CMD_SET_CURRENT = 1;  // payload: int32 [mA]
+static constexpr int CMD_SET_POS     = 4;  // payload: int32 [stopnie * 1e6]
 
-    can.open(interface);
+// ID statusu serwomechanizmow: gorny bajt = 0x29.
+static constexpr uint32_t STATUS_ID_MASK  = 0xFF00;
+static constexpr uint32_t STATUS_ID_VALUE = 0x2900;
 
-};
+ArmController::ArmController(const std::string& can_port) {
+    for (int i = 0; i < NUM_MOTORS; i++)
+        motor_ids[i] = i + 1;  // silniki 1..6
+
+    can.open(can_port);
+}
 
 bool ArmController::ServoReceiveData(ServoState& state) {
     uint32_t id;
     std::vector<uint8_t> data;
-    bool result = can.receive(id, data);
-    if((id & 0xFF00) == 0x2900) {
-        state.id = id & 0xFF;
-        state.position = (int16_t)((data[0] << 8) | data[1]);
-        state.torque = (int16_t)((data[4] << 8) | data[5]) / 10.0f;
-        state.velocity = (int16_t)((data[2] << 8) | data[3]);
-        state.temp = (uint8_t)(data[6]);
 
+    if (!can.receive(id, data)) return false;
 
-        
+    if ((id & STATUS_ID_MASK) != STATUS_ID_VALUE) return false;
+    if (data.size() < 7) return false;
 
-        
-    }
-    return result;
+    state.id       = static_cast<int>(id & 0xFF);
+    state.position = static_cast<int16_t>((data[0] << 8) | data[1]);
+    state.velocity = static_cast<int16_t>((data[2] << 8) | data[3]);
+    state.torque   = static_cast<int16_t>((data[4] << 8) | data[5]) / 10.0f;
+    state.temp     = static_cast<uint8_t>(data[6]);
+
+    return true;
 }
 
 bool ArmController::setPosMotor(int motor_id, float degrees) {
-    int cmd_type = 4;
-    int32_t pos = (int32_t)(degrees * 1000000);
-    std::vector<uint8_t> packet;
-    packet.push_back(pos >> 24 & 0xFF);
-    packet.push_back(pos >> 16 & 0xFF);
-    packet.push_back(pos >> 8 & 0xFF);
-    packet.push_back(pos >> 0 & 0xFF);
-    can.send((cmd_type << 8) | motor_id, packet);
+    int32_t raw = static_cast<int32_t>(degrees * 1000000.0f);
+    std::vector<uint8_t> packet = {
+        static_cast<uint8_t>((raw >> 24) & 0xFF),
+        static_cast<uint8_t>((raw >> 16) & 0xFF),
+        static_cast<uint8_t>((raw >>  8) & 0xFF),
+        static_cast<uint8_t>((raw >>  0) & 0xFF),
+    };
+    can.send((CMD_SET_POS << 8) | motor_id, packet);
+    return true;
+}
+
+bool ArmController::setCurrentMotor(int motor_id, float current) {
+    int32_t ma = static_cast<int32_t>(current * 1000.0f);  // A -> mA
+    std::vector<uint8_t> packet = {
+        static_cast<uint8_t>((ma >> 24) & 0xFF),
+        static_cast<uint8_t>((ma >> 16) & 0xFF),
+        static_cast<uint8_t>((ma >>  8) & 0xFF),
+        static_cast<uint8_t>((ma >>  0) & 0xFF),
+    };
+    can.send((CMD_SET_CURRENT << 8) | motor_id, packet);
     return true;
 }
