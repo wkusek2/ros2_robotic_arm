@@ -40,7 +40,7 @@ ArmNode (ROS2) → ArmController → CanBridge → USB-CAN-A → silniki AK seri
 |------|------|--------|
 | 1 | Workspace ROS2, węzeł C++, launch file Python | ✅ |
 | 2 | URDF 6-DOF, TF2, wizualizacja RViz2 | ✅ |
-| 3 | CanBridge (Waveshare binarny protokół), ArmController, odczyt danych z silnika AK45-36 | ✅ |
+| 3 | CanBridge (Waveshare binarny protokół), ArmController, odczyt statusu (pos/vel/cur/temp), setPosMotor, osobny wątek CAN | ✅ |
 | 4 | Symulacja Gazebo Fortress | ⏳ |
 | 4 | ros2_control, Hardware Interface, kontrolery | ⏳ |
 | 5 | Kinematyka FK/IK, parametry DH, KDL | ⏳ |
@@ -77,7 +77,8 @@ sudo apt install can-utils
 ## Sprzęt
 
 - Waveshare USB-CAN-A (CH340, protokół binarny 2 Mbps)
-- Silniki AK series (AK45-36) — protokół MIT Cheetah
+- Silniki CubeMars AK45-36 (VESC firmware) — POLE_PAIRS=14, GEAR_RATIO=36, Kt=2.009 Nm/A
+- Sterowanie: SET_POS (cmd=4), SET_CURRENT (cmd=1) przez CAN
 - Port: `/dev/ttyUSB*`
 
 ## Robot
