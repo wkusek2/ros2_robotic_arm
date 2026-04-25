@@ -33,6 +33,11 @@ bool ArmController::ServoReceiveData(ServoState& state) {
     state.torque   = static_cast<int16_t>((data[4] << 8) | data[5]) / 10.0f;
     state.temp     = static_cast<uint8_t>(data[6]);
 
+    // Zaktualizuj bufor stanow (indeks = motor_id - 1).
+    int idx = state.id - 1;
+    if (idx >= 0 && idx < NUM_MOTORS)
+        states_[idx] = state;
+
     return true;
 }
 

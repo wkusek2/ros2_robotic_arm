@@ -8,9 +8,11 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
 
 add_executable(armnode src/arm/armnode.cpp src/arm/CanBridge.cpp src/arm/ArmController.cpp)
-ament_target_dependencies(armnode rclcpp)
+ament_target_dependencies(armnode rclcpp sensor_msgs diagnostic_msgs)
 install(TARGETS armnode DESTINATION lib/${PROJECT_NAME})
 
 
