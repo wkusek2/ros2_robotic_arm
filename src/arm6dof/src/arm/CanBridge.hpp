@@ -16,6 +16,7 @@ public:
     // Wysyla ramke CAN: 4-bajtowe ID (little-endian) + payload.
     void send(uint32_t id, const std::vector<uint8_t>& data);
 
+    bool waitForData(int timeout_ms);
     // Czeka na jedna kompletna ramke CAN. Zwraca false przy timeoucie lub bledzie.
     bool receive(uint32_t& id, std::vector<uint8_t>& data);
 

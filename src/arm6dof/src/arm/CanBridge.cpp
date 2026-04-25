@@ -7,6 +7,7 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <poll.h>
 
 CanBridge::CanBridge() : serial_fd(-1) {}
 
@@ -94,4 +95,9 @@ bool CanBridge::receive(uint32_t& id, std::vector<uint8_t>& data) {
        | (static_cast<uint32_t>(id_bytes[2]) << 16)
        | (static_cast<uint32_t>(id_bytes[3]) << 24);
     return true;
+}
+
+bool CanBridge::waitForData(int timeout_ms) {
+    struct pollfd pfd = { serial_fd, POLLIN, 0 };
+    return poll(&pfd, 1, timeout_ms) > 0;
 }

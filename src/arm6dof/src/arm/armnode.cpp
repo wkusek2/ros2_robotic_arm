@@ -28,8 +28,10 @@ private:
     // Uruchamiana w osobnym watku — nie blokuje spinu ROS.
     void canLoop() {
         while (rclcpp::ok()) {
-            ServoState state;
-            if (arm_controller.ServoReceiveData(state)) {
+                if (!arm_controller.getCan().waitForData(200))
+                    continue;
+                ServoState state;
+                if (arm_controller.ServoReceiveData(state)) {
                 RCLCPP_INFO(get_logger(),
                     "id:%d  pos:%.1f  vel:%.1f  cur:%.2f A  temp:%d C",
                     state.id, state.position, state.velocity, state.torque, state.temp);

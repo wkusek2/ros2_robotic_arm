@@ -34,6 +34,8 @@ public:
     // Wyslij zadanie pradu [A] do silnika o podanym ID.
     bool setCurrentMotor(int motor_id, float current);
 
+    CanBridge& getCan() { return can; }
+
 private:
     int motor_ids[NUM_MOTORS];
     CanBridge can;
