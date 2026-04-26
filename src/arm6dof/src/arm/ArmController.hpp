@@ -3,6 +3,7 @@
 #include <array>
 #include <string>
 #include "CanBridge.hpp"
+#include <mutex>
 
 // Stan odczytany z serwomechanizmu po ramce statusu 0x29xx.
 struct ServoState {
@@ -39,5 +40,6 @@ public:
 private:
     int motor_ids[NUM_MOTORS];
     CanBridge can;
+    std::mutex can_mutex_;
     std::array<ServoState, NUM_MOTORS> states_{};  // bufor stanow wszystkich silnikow
 };

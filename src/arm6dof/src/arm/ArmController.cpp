@@ -28,9 +28,9 @@ bool ArmController::ServoReceiveData(ServoState& state) {
     if (data.size() < 7) return false;
 
     state.id       = static_cast<int>(id & 0xFF);
-    state.position = static_cast<int16_t>((data[0] << 8) | data[1]);
-    state.velocity = static_cast<int16_t>((data[2] << 8) | data[3]);
-    state.torque   = static_cast<int16_t>((data[4] << 8) | data[5]) / 10.0f;
+    state.position = static_cast<int16_t>((data[0] << 8) | data[1]) / 10.0f;
+    state.velocity = static_cast<int16_t>((data[2] << 8) | data[3]) / 10.0f;
+    state.torque   = static_cast<int16_t>((data[4] << 8) | data[5]) / 100.0f;
     state.temp     = static_cast<uint8_t>(data[6]);
 
     // Zaktualizuj bufor stanow (indeks = motor_id - 1).
@@ -49,6 +49,7 @@ bool ArmController::setPosMotor(int motor_id, float degrees) {
         static_cast<uint8_t>((raw >>  8) & 0xFF),
         static_cast<uint8_t>((raw >>  0) & 0xFF),
     };
+    std::lock_guard<std::mutex> lock(can_mutex_);
     can.send((CMD_SET_POS << 8) | motor_id, packet);
     return true;
 }
@@ -61,6 +62,7 @@ bool ArmController::setCurrentMotor(int motor_id, float current) {
         static_cast<uint8_t>((ma >>  8) & 0xFF),
         static_cast<uint8_t>((ma >>  0) & 0xFF),
     };
+    std::lock_guard<std::mutex> lock(can_mutex_);
     can.send((CMD_SET_CURRENT << 8) | motor_id, packet);
     return true;
 }

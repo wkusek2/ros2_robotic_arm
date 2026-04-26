@@ -40,7 +40,7 @@ ArmNode (ROS2) → ArmController → CanBridge → USB-CAN-A → silniki AK seri
 |------|------|--------|
 | 1 | Workspace ROS2, węzeł C++, launch file Python | ✅ |
 | 2 | URDF 6-DOF, TF2, wizualizacja RViz2 | ✅ |
-| 3 | CanBridge (Waveshare binarny protokół), ArmController, odczyt statusu (pos/vel/cur/temp), setPosMotor, osobny wątek CAN, publikacja `joint_states` + `arm/diagnostics`, bufor stanów `getStates()` | ✅ |
+| 3 | CanBridge (Waveshare binarny protokół), ArmController, odczyt statusu (pos/vel/cur/temp), setPosMotor, setCurrentMotor, osobny wątek CAN, publikacja `joint_states` + `arm/diagnostics`, subskrypcje `arm/set_position` + `arm/set_current`, bufor stanów `getStates()` | ✅ |
 | 4 | Symulacja Gazebo Fortress | ⏳ |
 | 4 | ros2_control, Hardware Interface, kontrolery | ⏳ |
 | 5 | Kinematyka FK/IK, parametry DH, KDL | ⏳ |

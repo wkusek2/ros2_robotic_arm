@@ -3,14 +3,32 @@
 #include "ArmController.hpp"
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 // Wezel ROS 2 sterujacy ramieniem 6-DOF przez CAN.
 // Watki: ROS spin (glowny) + canLoop (odczyt statusu z szyny CAN).
 class ArmNode : public rclcpp::Node {
 public:
-    ArmNode() : Node("ArmNode"), arm_controller("/dev/ttyUSB1") {
+    ArmNode() : Node("ArmNode"), arm_controller("/dev/ttyUSB0") {
         RCLCPP_INFO(get_logger(), "ArmNode wystartowal");
         joint_pub_ = create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
         diag_pub_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>("arm/diagnostics", 10);
+        pos_sub_ = create_subscription<std_msgs::msg::Float64MultiArray>(
+            "arm/set_position", 10,
+        [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
+            if (msg->data.size() < 2) return;
+            int motor_id = static_cast<int>(msg->data[0]);
+            float degrees = static_cast<float>(msg->data[1]);
+            arm_controller.setPosMotor(motor_id, degrees);
+        });
+        cur_sub_ = create_subscription<std_msgs::msg::Float64MultiArray>(
+            "arm/set_current", 10,
+        [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
+            if (msg->data.size() < 2) return;
+            int motor_id = static_cast<int>(msg->data[0]);
+            float amps = static_cast<float>(msg->data[1]);
+            arm_controller.setCurrentMotor(motor_id, amps);
+        });
+
         can_thread_ = std::thread(&ArmNode::canLoop, this);
     }
 
@@ -23,6 +41,8 @@ private:
     std::thread   can_thread_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diag_pub_;
+    rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr pos_sub_;
+    rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr cur_sub_;
 
     // Petla odczytu ramek statusu z szyny CAN.
     // Uruchamiana w osobnym watku — nie blokuje spinu ROS.
@@ -32,9 +52,6 @@ private:
                     continue;
                 ServoState state;
                 if (arm_controller.ServoReceiveData(state)) {
-                RCLCPP_INFO(get_logger(),
-                    "id:%d  pos:%.1f  vel:%.1f  cur:%.2f A  temp:%d C",
-                    state.id, state.position, state.velocity, state.torque, state.temp);
                 sensor_msgs::msg::JointState msg;
                 msg.header.stamp = now();
                 msg.name = { "joint_" + std::to_string(state.id) };

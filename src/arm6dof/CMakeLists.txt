@@ -10,9 +10,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+
 
 add_executable(armnode src/arm/armnode.cpp src/arm/CanBridge.cpp src/arm/ArmController.cpp)
-ament_target_dependencies(armnode rclcpp sensor_msgs diagnostic_msgs)
+ament_target_dependencies(armnode rclcpp sensor_msgs diagnostic_msgs std_msgs)
 install(TARGETS armnode DESTINATION lib/${PROJECT_NAME})
 
 
