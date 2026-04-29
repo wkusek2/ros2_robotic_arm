@@ -1,4 +1,4 @@
-<library path="arm6dof">
+<library path="arm6dof_hardware">
   <class name="arm6dof/ArmHardwareInterface"
          type="ArmHardwareInterface"
          base_class_type="hardware_interface::SystemInterface">

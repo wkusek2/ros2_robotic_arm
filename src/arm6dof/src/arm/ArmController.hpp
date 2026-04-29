@@ -23,6 +23,8 @@
 #include <array>
 #include <string>
 #include <mutex>
+#include <thread>
+#include <atomic>
 #include "CanBridge.hpp"
 
 // --- Feedback data structures ---
@@ -56,6 +58,7 @@ public:
     static constexpr int NUM_MOTORS = 6;
 
     explicit ArmController(const std::string& can_port);
+    ~ArmController();
 
     // --- Receive ---
 
@@ -63,11 +66,11 @@ public:
     // Populates the corresponding struct.
     FrameType receiveAny(ServoState& servo, MITState& mit);
 
-    // Returns the buffer of last known servo states (index = motor_id - 1).
-    const std::array<ServoState, NUM_MOTORS>& getStates() const { return states_; }
-
-    // Access to the CAN adapter (e.g. for waitForData).
-    CanBridge& getCan() { return can; }
+    // Returns the buffer of last known MIT states (index = motor_id - 1).
+    std::array<MITState, NUM_MOTORS> getMITStates() const {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        return mit_states_;
+    }
 
     // --- Transmit — servo mode ---
 
@@ -95,6 +98,12 @@ public:
 private:
     int    motor_ids[NUM_MOTORS];
     CanBridge can;
-    std::mutex can_mutex_;                        // guards CAN bus access from multiple threads
-    std::array<ServoState, NUM_MOTORS> states_{}; // last known servo state per motor
+    mutable std::mutex can_mutex_;                      // guards CAN bus transmit
+    mutable std::mutex state_mutex_;                    // guards mit_states_ buffer
+    std::array<ServoState, NUM_MOTORS> states_{};
+    std::array<MITState,   NUM_MOTORS> mit_states_{};   // last known MIT feedback per motor
+
+    std::thread receive_thread_;
+    std::atomic<bool> running_{false};
+    void receiveLoop();
 };

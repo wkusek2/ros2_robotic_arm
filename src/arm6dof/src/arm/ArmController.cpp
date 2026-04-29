@@ -56,6 +56,35 @@ ArmController::ArmController(const std::string& can_port) {
         motor_ids[i] = i + 1;  // motors 1..6
 
     can.open(can_port);
+    running_ = true;
+    receive_thread_ = std::thread(&ArmController::receiveLoop, this);
+}
+
+ArmController::~ArmController() {
+    running_ = false;
+    if (receive_thread_.joinable())
+        receive_thread_.join();
+}
+
+// ============================================================
+// Receive loop — runs in a background thread
+// ============================================================
+
+void ArmController::receiveLoop() {
+    ServoState servo;
+    MITState   mit;
+    while (running_) {
+        if (!can.waitForData(100))
+            continue;
+        auto type = receiveAny(servo, mit);
+        if (type == FrameType::MIT) {
+            int idx = mit.id - 1;
+            if (idx >= 0 && idx < NUM_MOTORS) {
+                std::lock_guard<std::mutex> lock(state_mutex_);
+                mit_states_[idx] = mit;
+            }
+        }
+    }
 }
 
 // ============================================================
