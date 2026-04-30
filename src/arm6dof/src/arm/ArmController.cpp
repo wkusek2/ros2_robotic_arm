@@ -123,7 +123,7 @@ FrameType ArmController::receiveAny(ServoState& servo, MITState& mit) {
     //   [3&F] + [4]  kp        12b  (unused in feedback, same format)
     //   [5] + [6>>4] kd        12b
     //   [6&F] + [7]  torque    12b
-    if (id <= 0x7FF && data.size() == 8) {
+    if (id <= 0x7FF && data.size() == 8 && data[0] >= 1 && data[0] <= NUM_MOTORS) {
         uint32_t p_i = (static_cast<uint32_t>(data[1]) << 8) | data[2];
         uint32_t v_i = (static_cast<uint32_t>(data[3]) << 4) | (data[4] >> 4);
         uint32_t t_i = ((static_cast<uint32_t>(data[4]) & 0x0F) << 8) | data[5];
@@ -134,6 +134,9 @@ FrameType ArmController::receiveAny(ServoState& servo, MITState& mit) {
         mit.torque      = uintToFloat(t_i, T_MIN, T_MAX, 12);
         mit.temperature = data[6];
         mit.error       = data[7];
+
+        if (mit.error != 0)
+            return FrameType::NONE;
 
         return FrameType::MIT;
     }
@@ -205,6 +208,8 @@ void ArmController::mitZero(int motor_id) {
 //   data[6]     kd        [3:0] | torque [11:8]
 //   data[7]     torque    [7:0]
 void ArmController::sendMIT(int motor_id, float p, float v, float kp, float kd, float torque) {
+    std::cerr << "MIT motor=" << motor_id << " p=" << p << " v=" << v << " kp=" << kp << " kd=" << kd << " tau=" << torque << "\n";
+
     uint32_t p_i  = floatToUint(p,      P_MIN,  P_MAX,  16);
     uint32_t v_i  = floatToUint(v,      V_MIN,  V_MAX,  12);
     uint32_t kp_i = floatToUint(kp,     KP_MIN, KP_MAX, 12);

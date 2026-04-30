@@ -1,5 +1,6 @@
 #include "ArmHardwareInterface.hpp"
 #include "pluginlib/class_list_macros.hpp"
+#include <cmath>
 
 
 
@@ -44,8 +45,10 @@ std::vector<hardware_interface::CommandInterface> ArmHardwareInterface::export_c
 hardware_interface::return_type ArmHardwareInterface::read(const rclcpp::Time&, const rclcpp::Duration&) {
     const auto states = arm_controller_->getMITStates();
     for (int i = 0; i < 6; i++) {
-        hw_states_position_[i] = states[i].position;
-        hw_states_velocity_[i] = states[i].velocity;
+        if (std::abs(states[i].position) <= 12.5f)
+            hw_states_position_[i] = states[i].position;
+        if (std::abs(states[i].velocity) <= 50.0f)
+            hw_states_velocity_[i] = states[i].velocity;
     }
     return hardware_interface::return_type::OK;
 }
