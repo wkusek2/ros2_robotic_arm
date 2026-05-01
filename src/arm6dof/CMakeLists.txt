@@ -31,7 +31,7 @@ add_library(arm6dof_hardware SHARED
   src/arm/ArmController.cpp
   src/arm/ArmHardwareInterface.cpp
 )
-ament_target_dependencies(arm6dof_hardware rclcpp hardware_interface pluginlib)
+ament_target_dependencies(arm6dof_hardware rclcpp hardware_interface pluginlib std_msgs)
 pluginlib_export_plugin_description_file(hardware_interface arm6dof_plugin.xml)
 
 install(TARGETS armnode arm6dof_hardware DESTINATION lib/${PROJECT_NAME})

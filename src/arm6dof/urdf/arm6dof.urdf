@@ -298,37 +298,58 @@
         <axis xyz="0.087156 -0.996195 0.0" />
     </joint>
 
+    <link name="joint7_link" />
+
+    <joint name="joint7" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="jedziemy_dalej_V2_silnik_ak45-10-Kopiuj-v1" />
+        <child link="joint7_link" />
+        <axis xyz="0 0 1" />
+    </joint>
+
     <ros2_control name="arm6dof_system" type="system">
         <hardware>
             <plugin>arm6dof/ArmHardwareInterface</plugin>
         </hardware>
         <joint name="joint1">
             <command_interface name="position"/>
+            <command_interface name="velocity"/>
             <state_interface name="position"/>
             <state_interface name="velocity"/>
         </joint>
         <joint name="joint2">
             <command_interface name="position"/>
+            <command_interface name="velocity"/>
             <state_interface name="position"/>
             <state_interface name="velocity"/>
         </joint>
         <joint name="joint3">
             <command_interface name="position"/>
+            <command_interface name="velocity"/>
             <state_interface name="position"/>
             <state_interface name="velocity"/>
         </joint>
         <joint name="joint4">
             <command_interface name="position"/>
+            <command_interface name="velocity"/>
             <state_interface name="position"/>
             <state_interface name="velocity"/>
         </joint>
         <joint name="joint5">
             <command_interface name="position"/>
+            <command_interface name="velocity"/>
             <state_interface name="position"/>
             <state_interface name="velocity"/>
         </joint>
         <joint name="joint6">
             <command_interface name="position"/>
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="joint7">
+            <command_interface name="position"/>
+            <command_interface name="velocity"/>
             <state_interface name="position"/>
             <state_interface name="velocity"/>
         </joint>
